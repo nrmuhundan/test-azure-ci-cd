@@ -1,19 +1,49 @@
-steps:
-- task: DotNetCoreCLI@2
-  displayName: Restore, Build and Publish Files
-  inputs:
-    command: publish
-    publishWebProjects: false
-    projects: src/MyHost
-    workingDirectory: 
-    arguments: --output $(Build.ArtifactStagingDirectory)
-    zipAfterPublish: true
-    modifyOutputPath: true
+trigger:
+- master
 
-- task: PublishBuildArtifacts@1
-  displayName: Publish Artifacts
-  inputs:
-    pathToPublish: $(Build.ArtifactStagingDirectory)
-    artifactName: deploy
-    artifactType: container
+stages:
+- stage: Build
+  jobs:
+  - job: Build
+
+    steps:
+    - task: DotNetCoreCLI@2
+      displayName: Restore, Build and Publish Files
+      inputs:
+        command: publish
+        publishWebProjects: false
+        projects: src/MyHost
+        workingDirectory: 
+        arguments: --output $(Build.ArtifactStagingDirectory)
+        zipAfterPublish: false
+        modifyOutputPath: false
+
+    - task: PublishBuildArtifacts@1
+      displayName: Publish Artifacts
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)
+        artifactName: drop
+        artifactType: container
+
+- stage: Deploy
+  jobs:
+  - deployment: Deploy
+
+    environment: release
+    strategy:
+      # default deployment strategy
+      runOnce:
+        deploy:
+          steps:
+          - task: AzureRmWebAppDeployment@4
+            inputs:
+              ConnectionType: 'AzureRM'
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              WebAppName: 'my-azure-ci-cd'
+              Package: '$(Pipeline.Workspace)/drop'
+
+            env: 
+              MAPPED_AZURE_SUBSCRIPTION: $(azureSubscription)
+
 
