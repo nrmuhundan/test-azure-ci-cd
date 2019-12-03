@@ -1,23 +1,12 @@
 steps:
 - task: DotNetCoreCLI@2
-  displayName: Restore NuGet Packages
-  inputs:
-    command: restore
-
-- task: DotNetCoreCLI@2
-  displayName: Compile
-  inputs:
-    command: build
-    arguments: --no-restore
-
-- task: DotNetCoreCLI@2
-  displayName: Prepare Publish Files
+  displayName: Restore, Build and Publish Files
   inputs:
     command: publish
     publishWebProjects: false
-    projects: src/Host
+    projects: src/MyHost
     workingDirectory: 
-    arguments: --no-restore --no-build --output $(Build.ArtifactStagingDirectory)
+    arguments: --output $(Build.ArtifactStagingDirectory)
     zipAfterPublish: true
     modifyOutputPath: true
 
